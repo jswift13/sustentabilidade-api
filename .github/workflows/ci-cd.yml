@@ -6,8 +6,24 @@ on:
 
 jobs:
   build-and-test:
-    name: Build e Test
+    name: Build & Test
     runs-on: ubuntu-latest
+
+    services:
+      oracle:
+        image: gvenzl/oracle-xe:21-slim
+        env:
+          ORACLE_PASSWORD: oracle123
+          APP_USER: ESG
+          APP_USER_PASSWORD: esg123
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +37,11 @@ jobs:
         run: ./mvnw clean package -DskipTests
 
       - name: Test
-        run: ./mvnw test -Dspring.flyway.enabled=false
+        run: ./mvnw test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:oracle:thin:@localhost:1521/XEPDB1
+          SPRING_DATASOURCE_USERNAME: ESG
+          SPRING_DATASOURCE_PASSWORD: esg123
 
   deploy-staging:
     name: Deploy Staging
