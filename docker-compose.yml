@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  oracle:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: oracle-db
+    environment:
+      - ORACLE_PASSWORD=oracle123
+      - APP_USER=ESG
+      - APP_USER_PASSWORD=esg123
+    ports:
+      - "1521:1521"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    networks:
+      - esg-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  api-staging:
+    build: .
+    container_name: api-staging
+    depends_on:
+      oracle:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle:1521/XEPDB1
+      - SPRING_DATASOURCE_USERNAME=ESG
+      - SPRING_DATASOURCE_PASSWORD=esg123
+      - SPRING_PROFILES_ACTIVE=staging
+    ports:
+      - "8080:8080"
+    networks:
+      - esg-net
+
+  api-production:
+    build: .
+    container_name: api-production
+    depends_on:
+      oracle:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:oracle:thin:@oracle:1521/XEPDB1
+      - SPRING_DATASOURCE_USERNAME=ESG
+      - SPRING_DATASOURCE_PASSWORD=esg123
+      - SPRING_PROFILES_ACTIVE=production
+    ports:
+      - "8081:8080"
+    networks:
+      - esg-net
+
+volumes:
+  oracle-data:
+
+networks:
+  esg-net:
+    driver: bridge
