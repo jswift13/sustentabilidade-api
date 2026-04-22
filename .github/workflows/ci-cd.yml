@@ -36,62 +36,12 @@ jobs:
       - name: Build
         run: ./mvnw clean package -DskipTests
 
-      - name: Testes unitários
+      - name: Testes unitários e integração
         run: ./mvnw test
         env:
           SPRING_DATASOURCE_URL: jdbc:oracle:thin:@localhost:1521/XEPDB1
           SPRING_DATASOURCE_USERNAME: ESG
           SPRING_DATASOURCE_PASSWORD: esg123
-
-      - name: Subir API para smoke tests
-        run: |
-          java -jar target/*.jar &
-          echo "Aguardando API inicializar..."
-          sleep 30
-        env:
-          SPRING_DATASOURCE_URL: jdbc:oracle:thin:@localhost:1521/XEPDB1
-          SPRING_DATASOURCE_USERNAME: ESG
-          SPRING_DATASOURCE_PASSWORD: esg123
-          SERVER_PORT: 8080
-
-      - name: Smoke tests — endpoints reais
-        run: |
-          echo "=== GET /api/setores ==="
-          curl -f -u user:user123 http://localhost:8080/api/setores
-          echo ""
-
-          echo "=== GET /api/indicadores/sustentabilidade ==="
-          curl -f -u user:user123 \
-            "http://localhost:8080/api/indicadores/sustentabilidade?de=2025-01-01&ate=2025-12-31"
-          echo ""
-
-          echo "=== GET /api/ranking/setores ==="
-          curl -f -u user:user123 \
-            "http://localhost:8080/api/ranking/setores?de=2025-01-01&ate=2025-12-31"
-          echo ""
-
-          echo "=== Teste de segurança: sem credenciais deve retornar 401 ==="
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/setores)
-          if [ "$STATUS" = "401" ]; then
-            echo "✅ Segurança OK - retornou 401"
-          else
-            echo "❌ Falha de segurança - esperado 401, recebeu $STATUS"
-            exit 1
-          fi
-
-          echo "=== Teste de segurança: USER tentando POST deve retornar 403 ==="
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -u user:user123 \
-            -X POST -H "Content-Type: application/json" \
-            -d '{"idSetor":1,"nomeEquipamento":"Teste","potenciaWatts":100,"status":"ATIVO"}' \
-            http://localhost:8080/api/equipamentos)
-          if [ "$STATUS" = "403" ]; then
-            echo "✅ Autorização OK - retornou 403"
-          else
-            echo "❌ Falha de autorização - esperado 403, recebeu $STATUS"
-            exit 1
-          fi
-
-          echo "=== Todos os smoke tests passaram ✅ ==="
 
   deploy-staging:
     name: Deploy Staging
