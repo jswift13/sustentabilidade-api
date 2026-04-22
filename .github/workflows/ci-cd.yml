@@ -69,11 +69,13 @@ jobs:
             sustentabilidade-api:staging
           echo "✅ Staging no ar - porta 8080"
 
-  deploy-production:
+deploy-production:
     name: Deploy Production
     needs: deploy-staging
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
     steps:
       - uses: actions/checkout@v4
 
@@ -91,4 +93,4 @@ jobs:
             -e SPRING_PROFILES_ACTIVE=production \
             -e SPRING_FLYWAY_ENABLED=false \
             sustentabilidade-api:production
-          echo "✅ Production no ar - porta 8081"
+          echo "Deploy production concluido - porta 8081"
