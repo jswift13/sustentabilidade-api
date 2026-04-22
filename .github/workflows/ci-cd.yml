@@ -1,8 +1,10 @@
-name: CI/CD Pipeline
+name: CI/CD Pipeline - Sustentabilidade API
 
 on:
   push:
     branches: [main, develop]
+
+run-name: "Pipeline ${{ github.ref_name }} - ${{ github.actor }}"
 
 jobs:
   build-and-test:
