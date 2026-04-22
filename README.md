@@ -1,5 +1,7 @@
 # Projeto - Cidades ESGInteligentes
 
+Jenifer Lopes Ribas
+
 Esta API é o motor de inteligência para monitoramento de sustentabilidade urbana, processando métricas de consumo energético, geração de energia solar e eficiência por setores.
 O foco da fase 6 são práticas modernas de **DevOps**.
 
