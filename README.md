@@ -1,126 +1,99 @@
-# Projeto - Cidades ESGInteligentes
+# Projeto - Cidades ESGInteligentes (Sustentabilidade API)
 
-Jenifer Lopes Ribas
+**Jenifer Lopes Ribas**  
+**Fase 7 - Emerging Technologies**
 
-Esta API é o motor de inteligência para monitoramento de sustentabilidade urbana, processando métricas de consumo energético, geração de energia solar e eficiência por setores.
-O foco da fase 6 são práticas modernas de **DevOps**.
+Esta API é o motor de inteligência para monitoramento de sustentabilidade urbana, processando métricas de consumo energético, geração de energia solar e eficiência por setores. O projeto evoluiu de uma infraestrutura baseada em DevOps (Fase 6) para um ecossistema completo de **Qualidade de Software e Automação de Testes (Fase 7)**.
 
----
-
-## Como executar localmente com Docker
-
-A aplicação está totalmente containerizada, o que facilita o setup local sem necessidade de instalar o JDK ou Maven manualmente.
-
-1.  **Build da Imagem:**
-    ```bash
-    docker build -t sustentabilidade-api .
-    ```
-
-2.  **Execução:**
-    Certifique-se de que seu banco Oracle XE está acessível e execute:
-    ```bash
-    docker run -d -p 8080:8080 \
-      --name api-sustentabilidade \
-      -e SPRING_DATASOURCE_URL=jdbc:oracle:thin:@host.docker.internal:1521/XEPDB1 \
-      -e SPRING_DATASOURCE_USERNAME=ESG \
-      -e SPRING_DATASOURCE_PASSWORD=esg123 \
-      sustentabilidade-api
-    ```
-    *Nota: No Windows/macOS, `host.docker.internal` aponta para o localhost da sua máquina.*
+O foco atual é garantir a integridade dos dados e a governança dos pilares **ESG** através de testes de contrato, testes funcionais de API e BDD.
 
 ---
 
-## Pipeline CI/CD
+## 🚀 Novidades da Fase 7: Automação de Testes
 
-Utilizamos **GitHub Actions** para automação completa do ciclo de vida da aplicação. O pipeline está definido em `.github/workflows/ci-cd.yml` e é disparado a cada push nas branches `main` e `develop`.
+Nesta fase, implementamos uma suíte de testes robusta para validar todos os endpoints da API, garantindo que as regras de negócio de sustentabilidade sejam respeitadas.
 
-### Etapas e Funcionamento:
+### Tecnologias Utilizadas
+*   **BDD (Cucumber):** Escrita de cenários em Gherkin.
+*   **Rest Assured:** Automação de requisições e validações REST.
+*   **JUnit 5:** Runner dos testes.
+*   **JSON Schema:** Validação de contrato (Governança de Dados).
+*   **Lombok & Google Gson:** Manipulação de dados e serialização JSON.
 
-1.  **Build & Test:**
-    - Instala o JDK 17 (Temurin).
-    - Sobe um container de serviço **Oracle XE (gvenzl/oracle-xe)** diretamente no runner do GitHub Actions para viabilizar testes de integração reais.
-    - Executa `./mvnw test` validando as regras de negócio e persistência.
-2.  **Deploy Staging:**
-    - Executado automaticamente após o sucesso dos testes.
-    - Realiza o build da imagem Docker.
-    - Simula o deploy em ambiente de homologação (porta 8080).
-3.  **Deploy Production:**
-    - Restrito à branch `main`.
-    - Realiza o deploy em ambiente de produção (porta 8081).
-    - Utiliza variáveis de ambiente específicas para isolamento de carga.
+### Estrutura do Projeto de Testes
+```text
+src/test/java
+├── model       # POJOs para mapeamento de dados (Lombok)
+├── services    # Lógica de chamadas Rest Assured (Service Objects)
+├── steps       # Implementação dos passos Gherkin
+├── hooks       # Setup de autenticação (Basic Auth) e URL
+└── runner      # Classe disparadora do Cucumber (JUnit 5)
 
----
-
-## Containerização
-
-A estratégia de containerização utiliza **Multi-stage Build**, garantindo uma imagem final leve e segura.
-
-### Conteúdo do Dockerfile:
-```dockerfile
-# STAGE 1: Build (Ambiente de compilação)
-FROM eclipse-temurin:17-jdk AS build
-WORKDIR /app
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
-RUN ./mvnw -q -DskipTests dependency:go-offline
-COPY src ./src
-RUN ./mvnw -q -DskipTests package
-
-# STAGE 2: Runtime (Ambiente de execução otimizado)
-FROM eclipse-temurin:17-jre
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
+src/test/resources
+├── features    # Arquivos .feature com cenários BDD
+└── schemas     # Arquivos .json para validação de contrato
 ```
 
-**Estratégias adotadas:**
-- **Isolamento de build:** A imagem final contém apenas o JRE (Java Runtime Environment) e o `.jar` final, sem o código-fonte ou ferramentas de build (Maven), reduzindo a superfície de ataque.
-- **Cache de dependências:** O uso do `dependency:go-offline` acelera builds subsequentes ao cachear camadas do Maven.
+---
+
+## 🛠 Como Executar Localmente (Docker + Testes)
+
+O setup foi simplificado para que a infraestrutura suba via Docker e os testes rodem via Maven.
+
+1.  **Subir a API e o Banco Oracle:**
+    Certifique-se de estar na raiz do projeto onde está o `docker-compose.yml`.
+    ```bash
+    docker-compose up -d
+    ```
+    *Nota: A população inicial de dados (Seed) é feita automaticamente pelo Flyway.*
+
+2.  **Executar a Suíte de Testes Automatizados:**
+    ```bash
+    ./mvnw clean test -Dtest=runner.TestRunner
+    ```
+    Este comando executará os cenários funcionais e as validações de contrato.
 
 ---
 
-## Prints do funcionamento
+## ⛓ Pipeline CI/CD (GitHub Actions)
 
-Aqui estão as evidências do ecossistema DevOps em funcionamento:
+O workflow foi atualizado para integrar a automação de testes como um "Gate de Qualidade" antes do deploy.
 
-**Visão Geral:**
-
-![Visão Geral](prints/01_summary.png)
-
-**Etapas:**
-
-Build:
-![Build and Test](prints/02_build_and_test.png)
-
-
-Deploy Staging:
-![Deploy Staging](prints/03_deploy_staging.png)
-
-
-Deploy Production:
-![Deploy Production](prints/04_deploy_production.png)
+### Fluxo Unificado (`ci-cd.yml`):
+1.  **Build & Test:** Compilação do código Java 17.
+2.  **Infraestrutura:** Inicialização do container Oracle XE 21c no runner.
+3.  **QA (Novo):** Execução automática dos testes de **BDD e API (Rest Assured)**. O deploy só prossegue se 100% dos testes passarem.
+4.  **Deploy Staging:** Criação da imagem Docker e publicação no ambiente de homologação (Porta 8080).
+5.  **Deploy Production:** Publicação oficial restringida à branch `main` (Porta 8081).
 
 ---
 
-## Tecnologias utilizadas
+## 🐳 Containerização
 
-- **Linguagem/Framework:** Java 17, Spring Boot 3.x
-- **Banco de Dados:** Oracle XE 21c
-- **CI/CD:** GitHub Actions
-- **Containerização:** Docker (Multi-stage)
-- **Segurança:** Spring Security (Basic Auth)
+A estratégia utiliza **Multi-stage Build**, garantindo uma imagem final focada em segurança e performance (JRE).
+
+**Estratégias ESG adotadas no Docker:**
+*   **Eficiência Energética:** Redução do tamanho da imagem para menor consumo de recursos de rede e armazenamento.
+*   **Segurança (JRE):** Menor superfície de ataque ao remover ferramentas de desenvolvimento (JDK/Maven) da imagem final.
 
 ---
 
-## Checklist de Entrega
+## 📝 Documentação e Evidências
+
+> **⚠️ AVISO:** Por motivos de compatibilidade e portabilidade do arquivo `.zip`, as imagens e prints de execução (Workflow do GitHub, Logs do Maven e Console do RestAssured) não estão presentes neste arquivo Markdown.
+>
+> **Consulte o arquivo `Relatório_Técnico_Testes.pdf` incluído na entrega para visualizar todas as evidências visuais do projeto em funcionamento.**
+
+---
+
+## Checklist de Entrega (Fase 7)
 
 | Item | Status |
 | :--- | :---: |
-| Projeto compactado em .ZIP com estrutura organizada | [x] |
-| Dockerfile funcional | [x] |
-| docker-compose.yml ou arquivos Kubernetes | [x] |
-| Pipeline com etapas de build, teste e deploy | [x] |
-| README.md com instruções e prints | [x] |
-| Documentação técnica com evidências (PDF ou PPT) | [x] |
-| Deploy realizado nos ambientes staging e produção | [x] |
+| Código-fonte completo em .ZIP | [x] |
+| Mínimo de 3 cenários Gherkin (BDD) | [x] |
+| Testes de API para todos os serviços (Rest Assured) | [x] |
+| Validação de Contrato (JSON Schema) | [x] |
+| Autenticação (Basic Auth) tratada nos testes | [x] |
+| Pipeline CI/CD integrado com a suíte de QA | [x] |
+| Documentação em PDF com prints e cenários | [x] |
