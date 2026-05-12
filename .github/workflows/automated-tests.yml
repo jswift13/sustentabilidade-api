@@ -1,0 +1,64 @@
+name: QA Automation - BDD & API Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-tests:
+    name: Run Automated API Tests
+    runs-on: ubuntu-latest
+
+    services:
+      oracle:
+        image: gvenzl/oracle-xe:21-slim
+        env:
+          ORACLE_PASSWORD: oracle123
+          APP_USER: ESG
+          APP_USER_PASSWORD: esg123
+        ports:
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: ./mvnw clean package -DskipTests
+
+      - name: Start API in Background
+        run: |
+          java -jar target/*.jar > api-log.txt 2>&1 &
+          echo "Aguardando API subir..."
+          sleep 30 # Tempo para a API conectar no Oracle e subir
+        env:
+          SPRING_DATASOURCE_URL: jdbc:oracle:thin:@localhost:1521/XEPDB1
+          SPRING_DATASOURCE_USERNAME: ESG
+          SPRING_DATASOURCE_PASSWORD: esg123
+
+      - name: Run Cucumber Tests
+        run: ./mvnw test -Dtest=runner.TestRunner
+        env:
+          SPRING_DATASOURCE_URL: jdbc:oracle:thin:@localhost:1521/XEPDB1
+          SPRING_DATASOURCE_USERNAME: ESG
+          SPRING_DATASOURCE_PASSWORD: esg123
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report
+          path: target/cucumber-report.html
