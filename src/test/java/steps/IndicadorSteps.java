@@ -3,7 +3,6 @@ package steps;
 import io.cucumber.java.pt.*;
 import io.restassured.module.jsv.JsonSchemaValidator;
 import io.restassured.response.Response;
-import org.hamcrest.Matchers;
 import services.IndicadorService;
 
 public class IndicadorSteps {
