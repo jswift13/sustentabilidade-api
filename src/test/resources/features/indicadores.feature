@@ -17,3 +17,8 @@ Cenário: Validar erro ao cadastrar equipamento (Cenário Negativo)
   Cenário: Exclusão lógica de Equipamento (DELETE)
     Quando eu deletar o equipamento com ID 1
     Então o status code deve ser 204
+
+
+
+
+    
