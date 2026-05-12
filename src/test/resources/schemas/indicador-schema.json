@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "de": { "type": "string" },
+    "ate": { "type": "string" },
+    "consumo_total_kwh": { "type": "number" },
+    "geracao_total_kwh": { "type": "number" },
+    "saldo_kwh": { "type": "number" },
+    "taxa_compensacao": { "type": ["number", "null"] },
+    "economia_co2_kg": { "type": "number" }
+  },
+  "required": ["consumo_total_kwh", "geracao_total_kwh", "saldo_kwh"]
+}
